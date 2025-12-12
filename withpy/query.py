@@ -18,3 +18,5 @@ def query():
         query=summary.query, records_count=len(records),
         time=summary.result_available_after
     ))
+
+    

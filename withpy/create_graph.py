@@ -7,7 +7,7 @@ def example_graph_init():
             CREATE (b:Person {name: $friendName})
             CREATE (a)-[:KNOWS]->(b)
         """,
-        name="Alice", friendName="David",
+        name="Sami", friendName="Zahangir",
         database_="neo4j",
     ).summary
     
