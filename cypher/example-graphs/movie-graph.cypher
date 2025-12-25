@@ -801,3 +801,51 @@ LIMIT 10
 MATCH (nineties_movies:Movie)
 WHERE nineties_movies.released >= 1990 AND nineties_movies.released < 2000
 RETURN nineties_movies.title AS movies
+
+/////////////////
+//# Query //////
+///////////////
+//# Finding patterns within the graph
+/*
+- Actors are people who acted in movies
+- Directories are people who directed a movie
+- What other relationship exist?
+*/
+
+// List all Tom Hanks movies...
+MATCH (tom:Person {name: "Tom Hanks"})-[:ACTED_IN]->(tomHanksMovies)
+RETURN tom, tomHanksMovies
+
+// Who directed "Cloud Atlas"?
+MATCH (cloudAtlas {title: "Cloud Atlas"})<-[:DIRECTED]-(directors)
+RETURN directors.name
+
+// Tom Hank's co-actors...
+MATCH (tom:Person {name: "Tom Hanks"})-[:ACTED_IN]->(m)<-[:ACTED_IN]-(coActors)
+RETURN coActors.name
+
+// How people are related to "Cloud Atlas"...
+MATCH (people:Person)-[relatedTo]-(m:Movie {title: "Cloud Atlas"})
+RETURN people.name, Type(relatedTo), relatedTo, m, people
+
+/////////////////
+//# Solve //////
+///////////////
+//# You've heard of the classic "Six Degrees of Kevin Bacon"?
+//# That is simple a shorted path query called the "Bacon Path".
+//# source: https://en.wikipedia.org/wiki/Six_Degrees_of_Kevin_Bacon
+//# Variable patterns Built-in shortestPath() algorithm
+
+// Movies and actors up to 4 "hops" away from Kevin Bacon.
+MATCH (bacon:Person {name: "Kevin Bacon"})-[*1..4]-(holywood)
+RETURN DISTINCT holywood
+
+// Bacon path, the shortest path of any relationships to Meg Ryan
+MATCH
+  p =
+    SHORTESTPATH
+    (
+    (bacon:Person {name: "Kevin Bacon"})-[*]-
+    (meg:Person {name: "Meg Ryan"}))
+RETURN p
+//# note: you only need to compare property values like this when first creating relatioships
