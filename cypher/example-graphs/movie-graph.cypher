@@ -849,3 +849,46 @@ MATCH
     (meg:Person {name: "Meg Ryan"}))
 RETURN p
 //# note: you only need to compare property values like this when first creating relatioships
+
+/////////////////
+//# Recommend //
+///////////////
+//# Let's recommend new co-actors for Tom Hanks. A basic recommendation approach is to find
+//# connections past an immediate neighborhood which are themselves well connected.
+
+//# For Tom Hanks, that means:
+/*
+Find actors that Tom Hanks hasn't yet worked with, but his co-actors have.
+Find someone who can introduce Tom to his potential co-actor.
+*/
+
+//# Extend Tom Hanks co-actors, to find co-co-actors who haven't worked with Tom Hanks...
+
+//# So, first let's see the list of co-actors who have worked with Tom Hanks
+MATCH
+  (tom:Person {name: "Tom Hanks"})-[a:ACTED_IN]->(m)<-[b:ACTED_IN]-(coActors)
+RETURN tom, a, m, b, coActors
+
+MATCH (tom:Person {name: "Tom Hanks"})-[:ACTED_IN]->(m)<-[:ACTED_IN]-(coActors)
+RETURN coActors
+
+//# Let's find cocoActors now..
+MATCH
+  (tom:Person {name: "Tom Hanks"})-[:ACTED_IN]->(m)<-[:ACTED_IN]-(coActors),
+  (coActors)-[x:ACTED_IN]->(m2)<-[y:ACTED_IN]-(cocoActors)
+RETURN coActors, x, m2, y, cocoActors
+
+//#
+MATCH
+  (tom:Person {name: "Tom Hanks"})-[:ACTED_IN]->(m)<-[:ACTED_IN]-(coActors),
+  (coActors)-[:ACTED_IN]->(m2)<-[:ACTED_IN]-(cocoActors)
+WHERE NOT (tom)-[:ACTED_IN]->()<-[:ACTED_IN]-(cocoActors) AND tom <> cocoActors
+RETURN cocoActors.name AS Recommended, count(*) AS Strength
+ORDER BY Strength DESC
+
+//# Find someone to introduce Tom Hanks to Tom Cruise
+MATCH
+  (tom:Person {name: "Tom Hanks"})-[:ACTED_IN]->(m)<-[:ACTED_IN]-(coActors),
+  (coActors)-[:ACTED_IN]->(m2)<-[:ACTED_IN]-(cruise:Person {name: "Tom Cruise"})
+RETURN tom, m, coActors, m2, cruise
+// recom : 3 : meg ryan, kevin bacon, bonnie hunt
