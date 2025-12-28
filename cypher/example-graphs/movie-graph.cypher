@@ -892,3 +892,27 @@ MATCH
   (coActors)-[:ACTED_IN]->(m2)<-[:ACTED_IN]-(cruise:Person {name: "Tom Cruise"})
 RETURN tom, m, coActors, m2, cruise
 // recom : 3 : meg ryan, kevin bacon, bonnie hunt
+
+/////////////////
+//# Clean up ///
+///////////////
+//# When you're done experimenting, you can remvoe the movie dataset
+//#Note: Nodes can't be deleted if relationships exist. Delete both nodes and relationships together.AND
+//# WARNING: This will remove all Person and Movie nodes!
+
+//# Delete all Movie and Person nodes, and their relationships
+MATCH (n)
+DETACH DELETE n
+
+//# Prove that the Movie Graph is gone
+MATCH (n)
+RETURN n
+
+//# Next Steps:
+//|\| Nortwind Graph - from RDBMS to graph |->| northwind-graph.cypher
+//|/| Cypher - Learn Cypher
+//|\| syntax: Explore more guides: Graph Gists Portal |->| https://portal.graphgist.org/
+
+//# Documentation:
+//|/| Developer resources: https://neo4j.com/developer/
+//|\| Neo4j Cypher Manual: https://neo4j.com/docs/cypher-manual/5.26/
