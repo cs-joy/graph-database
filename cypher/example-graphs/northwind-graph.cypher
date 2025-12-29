@@ -1,3 +1,4 @@
+//# 1/7
 //# Nortwind Graph
 //# From RDBMS to Graph, using a classic dataset
 /*
@@ -76,3 +77,84 @@ WHERE p.supplierID = s.supplierID
 CREATE (s)-[:SUPPLIES]->(p)
 
 //# Note you only need to compare property values like this when first creating relationships
+
+
+//# 4/7
+//# Querying Product Catalog Graph
+//# Let's try some queries using patterns.
+
+//# Query using patterns - q1
+//# List the product categories provided by each supplier
+MATCH (s:Supplier)-->(:Product)-->(c:Category)
+RETURN s.companyName as Company, collect(distinct c.categoryName) as Categories
+
+// Graph result - q1.2
+MATCH (s:Supplier)-->(p:Product)-->(c:Category)
+RETURN s, p, c
+
+// return supplier name, category and product - q1.3
+MATCH (s:Supplier)-->(p:Product)-->(c:Category)
+RETURN s.companyName as Company, collect(distinct c.categoryName) as Categories, collect(p.productName) as Products
+
+//# Find the produce suppliers - q2
+MATCH (c:Category {categoryName: "Produce"})<--(:Product)<--(s:Supplier)
+RETURN DISTINCT s.companyName as ProduceSuppliers
+
+
+//# 5/7
+//# Customer Orders
+//# Northwind customers place orders which may detail multiple products.
+
+//# Load and index records
+LOAD CSV WITH HEADERS FROM
+"https://data.neo4j.com/northwind/customers.csv" AS row
+CREATE (n: Customer)
+SET n = row
+
+LOAD CSV WITH HEADERS FROM
+"https://data.neo4j.com/northwind/orders.csv" AS row
+CREATE (n:Order)
+SET n = row
+
+CREATE INDEX FOR (n:Customer) ON (n.customerID)
+
+CREATE INDEX FOR (o:Order) ON (o.orderID)
+
+//# Create data relationships
+MATCH (c:Customer),(o:Order)
+WHERE c.customerID = o.customerID
+CREATE (c)-[:PURCHASED]->(o)
+// Note you only need to compare property values like this when first creating relationships
+
+
+//# 6/7
+//# Customer Order Graph
+//# Notice that Order Details are part of an Order and that they relate
+//# the Order to a Product - they're a join table Join tables are always
+//# a sign of a data relationship, indicating  shared information between two other records.
+
+//# Here, we'll directly promote each OrderDetail record into a relationship in the graph,, see "order-graph.png"
+
+//# Load and index records
+LOAD CSV WITH HEADERS FROM
+"https://data.neo4j.com/northwind/order-details.csv" AS row
+MATCH (p:Product),(o:Order)
+WHERE p.productID = row.productID AND o.orderID = row.orderID
+CREATE (o)-[details:ORDERS]->(p)
+SET details = row,
+details.quantity = toInteger(row.quantity)
+
+//# Query using patterns
+MATCH (cust:Customer)-[:PURCHASED]->(:Order)-[o:ORDERS]->(p:Product),
+(p)-[:PART_OF]->(c:Category{categoryName: "Produce"})
+RETURN DISTINCT cust.contactName as CustomerName,
+SUM(o.quantity) AS TotalProductsPurchased
+
+// graph
+MATCH (cust:Customer)-[pur:PURCHASED]->(or:Order)-[o:ORDERS]->(p:Product),
+(p)-[pa:PART_OF]->(c:Category{categoryName:"Produce"})
+RETURN cust, pur, or, o, p, pa,c
+
+
+
+
