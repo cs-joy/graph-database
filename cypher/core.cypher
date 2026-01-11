@@ -66,3 +66,64 @@ RETURN n AS connectedNodes
 // result in a graph - all actors whol acted in the individual novels
 MATCH (person:Person:Actor)-[ai:ACTED_IN]->(novel:Novel)
 RETURN person, ai, novel
+
+//# WHERE
+// Filter results
+// The WHERE clause imposes conditions on the data within a potentially matching path,
+// filtering the result set of a MATCH
+// MATCH describes the structure, and WHERE specifies the content of a query.
+// Ref: Manual page: [WHERE] https://neo4j.com/docs/cypher-manual/5/clauses/where/
+MATCH (author:Person)-[:DIRECTED]->(movie)
+WHERE author.name = "Mr. d"
+RETURN movie.title
+
+//# Example graph
+CREATE
+  (processor:Motherboard:Computer
+    {name: 'cpu', type: 'Primary', price: '336.21'}),
+  (mouse:Computer {name: 'Mouse', type: 'Secondary', price: 45.11}),
+  (keyboard:Computer {name: 'Keyboard', type: 'Primary', price: 23.45}),
+  (printer:Computer {name: 'Printer', type: 'Secondary', price: 183.4329}),
+  (monitor:Computer {name: 'Monitor', type: 'Secondary', price: 174.324}),
+  (ram:Computer {name: 'RAM', type: 'Primary', price: 234.92}),
+  (smp:Computer {name: 'PowerSupply', type: 'Primary', price: 734.27}),
+  (ssd:Computer {name: 'Solid State Drive', type: 'Primary', price: 356.12}),
+  (processor)-[:SYSTEM {since: 1970}]->(ram),
+  (processor)-[:SYSTEM {since: 1971}]->(ssd),
+  (processor)-[:SYSTEM {since: 1972}]->(smp),
+  (smp)-[:KNOWS {since: 1973}]->(monitor),
+  (monitor)-[:KNOWS {since: 1974}]->(keyboard),
+  (monitor)-[:KNOWS {since: 1974}]->(mouse),
+  (monitor)-[:KNOWS {since: 1975}]->(printer)
+
+MATCH (components:Computer)-[:KNOWS]->(comp)
+WHERE comp.type = "Primary"
+RETURN comp
+
+// find out a component of motherboard
+MATCH (n)
+WHERE n:Motherboard
+RETURN n.name
+
+// filter on a node property
+MATCH (n:Computer)
+WHERE n.price >= 100
+RETURN n.name AS Components, n.price AS Price
+
+// filter on a relationship property
+MATCH (:Computer)-[s:SYSTEM]->(f)
+WHERE s.since >= 1970
+RETURN f.name AS rComponent
+
+// filter on dynamically computed node property
+// first set your parameter
+:param
+{
+  "valname": 'price'
+}
+
+// then 
+MATCH (n:Computer)
+WHERE n[$valname] > 150
+RETURN n.name AS Name, n.type AS Type, n.price AS Price
+
